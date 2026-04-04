@@ -1,0 +1,9 @@
+[package]
+name = "knot-relay"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+futures = "0.3.32"
+libp2p = { version = "0.56.0", features = ["relay", "quic", "noise", "yamux", "identify", "tokio", "macros"] }
+tokio = { version = "1.51.0", features = ["full"] }
