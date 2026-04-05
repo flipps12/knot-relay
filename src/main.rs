@@ -1,3 +1,4 @@
+// src/main.rs
 use libp2p::{
     identify,
     relay,
@@ -79,6 +80,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                 if let identify::Event::Received { peer_id, info, .. } = e {
                     println!("Identificado Peer: {} con Addrs: {:?}", peer_id, info.listen_addrs);
                 }
+            }
+            SwarmEvent::ConnectionEstablished { peer_id, endpoint, .. } => {
+                println!("[Network] ✓ Conectado a {}", peer_id);
             }
             _ => {}
         }
