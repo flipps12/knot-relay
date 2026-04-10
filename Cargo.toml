@@ -7,4 +7,5 @@ license = "Apache-2.0"
 [dependencies]
 futures = "0.3.32"
 libp2p = { version = "0.56.0", features = ["relay", "quic", "noise", "yamux", "identify", "tokio", "macros", "tcp"] }
+libp2p-relay = "0.21.1"
 tokio = { version = "1.51.0", features = ["full"] }
