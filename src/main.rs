@@ -1,12 +1,12 @@
 use libp2p::{
-    SwarmBuilder, identify, identity::Keypair, noise, swarm::{NetworkBehaviour, SwarmEvent}, tcp, yamux
+    SwarmBuilder, relay, identify, identity::Keypair, noise, swarm::{NetworkBehaviour, SwarmEvent}, tcp, yamux
 };
 use std::error::Error;
 use futures::StreamExt;
 
 #[derive(NetworkBehaviour)]
 struct RelayBehaviour {
-    relay: libp2p_relay::Behaviour,
+    relay: relay::Behaviour,
     identify: identify::Behaviour,
 }
 
@@ -14,6 +14,10 @@ struct RelayBehaviour {
 async fn main() -> Result<(), Box<dyn Error>> {
     let local_key = libp2p::identity::Keypair::generate_ed25519();
     let local_peer_id = libp2p::PeerId::from(local_key.public());
+
+    tracing_subscriber::fmt()
+        .with_env_filter("libp2p=debug")
+        .init();
 
     let mut swarm = SwarmBuilder::with_existing_identity(local_key)
         .with_tokio()
@@ -23,11 +27,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
             noise::Config::new,
             yamux::Config::default,
         )?
-        // 2. TRANSPORTE QUIC (Para el "Buffet de Bytes" de alto rendimiento)
+        // 2. TRANSPORTE QUIC (Para el "Buffet de Bytes" de alto rendi
         .with_quic()
         .with_behaviour(|key: &Keypair| {
             RelayBehaviour {
-                relay: libp2p_relay::Behaviour::new(local_peer_id, libp2p_relay::Config::default()),
+                relay: relay::Behaviour::new(local_peer_id, relay::Config::default()),
                 identify: identify::Behaviour::new(identify::Config::new(
                     "/knot/relay/1.0.0".into(),
                     key.public(),
@@ -49,16 +53,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
             SwarmEvent::Behaviour(RelayBehaviourEvent::Identify(identify::Event::Received { peer_id, info, .. })) => {
                 println!("Nodo identificado: {peer_id} | Agente: {}", info.agent_version);
             }
-            SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(libp2p_relay::Event::ReservationReqAccepted { src_peer_id, renewed })) => {
+            SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(relay::Event::ReservationReqAccepted { src_peer_id, renewed })) => {
                 println!("New reservation: {} | renewed: {}", src_peer_id, renewed);
             }
-            SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(libp2p_relay::Event::CircuitReqAccepted { src_peer_id, dst_peer_id })) => {
+            SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(relay::Event::CircuitReqAccepted { src_peer_id, dst_peer_id })) => {
                 println!("Circuit Accepted: {} -> {}", src_peer_id, dst_peer_id);
             }
-            SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(libp2p_relay::Event::ReservationReqDenied { src_peer_id, status: _ })) => {
+            SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(relay::Event::ReservationReqDenied { src_peer_id, status: _ })) => {
                 println!("Denied reservation: {}", src_peer_id);
             }
-            SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(libp2p_relay::Event::CircuitReqDenied { src_peer_id, dst_peer_id, status })) => {
+            SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(relay::Event::CircuitReqDenied { src_peer_id, dst_peer_id, status })) => {
                 println!("Circuit Denied: {} -> {} - {:?}", src_peer_id, dst_peer_id, status);
             }
             _ => {}
