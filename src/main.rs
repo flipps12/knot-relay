@@ -39,7 +39,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // ESCUCHA EN AMBOS
     swarm.listen_on("/ip4/0.0.0.0/tcp/4001".parse()?)?;             // Puerto TCP
-    swarm.listen_on("/ip4/0.0.0.0/udp/4001/quic-v1".parse()?)?;    // Puerto QUIC
+    //swarm.listen_on("/ip4/0.0.0.0/udp/4001/quic-v1".parse()?)?;    // Puerto QUIC
 
     println!("Knot Relay operativo en {}", local_peer_id);
 
@@ -56,10 +56,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 println!("Circuit Accepted: {} -> {}", src_peer_id, dst_peer_id);
             }
             SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(libp2p_relay::Event::ReservationReqDenied { src_peer_id, status: _ })) => {
-                println!("New reservation: {}", src_peer_id);
+                println!("Denied reservation: {}", src_peer_id);
             }
             SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(libp2p_relay::Event::CircuitReqDenied { src_peer_id, dst_peer_id, status: _ })) => {
-                println!("Circuit Accepted: {} -> {}", src_peer_id, dst_peer_id);
+                println!("Circuit Denied: {} -> {}", src_peer_id, dst_peer_id);
             }
             _ => {}
         }
