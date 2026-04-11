@@ -58,8 +58,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(libp2p_relay::Event::ReservationReqDenied { src_peer_id, status: _ })) => {
                 println!("Denied reservation: {}", src_peer_id);
             }
-            SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(libp2p_relay::Event::CircuitReqDenied { src_peer_id, dst_peer_id, status: _ })) => {
-                println!("Circuit Denied: {} -> {}", src_peer_id, dst_peer_id);
+            SwarmEvent::Behaviour(RelayBehaviourEvent::Relay(libp2p_relay::Event::CircuitReqDenied { src_peer_id, dst_peer_id, status })) => {
+                println!("Circuit Denied: {} -> {} - {:?}", src_peer_id, dst_peer_id, status);
             }
             _ => {}
         }
