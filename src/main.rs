@@ -3,7 +3,7 @@ use libp2p::{
     PeerId,
     SwarmBuilder,
     identify,
-    identity::{self, Keypair},
+    identity::{ self, Keypair },
     kad,
     noise,
     ping,
@@ -159,14 +159,12 @@ fn load_or_create_identity() -> identity::Keypair {
     if path.exists() {
         // 1. Intentar cargar la llave existente
         let bytes = fs::read(path).expect("No se pudo leer el archivo de identidad");
-        identity::Keypair::from_protobuf_encoding(&bytes)
-            .expect("Archivo de identidad corrupto")
+        identity::Keypair::from_protobuf_encoding(&bytes).expect("Archivo de identidad corrupto")
     } else {
         // 2. Generar una nueva si no existe (usando Ed25519 por defecto)
         let new_key = identity::Keypair::generate_ed25519();
-        let encoded = new_key.to_protobuf_encoding()
-            .expect("No se pudo codificar la llave");
-        
+        let encoded = new_key.to_protobuf_encoding().expect("No se pudo codificar la llave");
+
         fs::write(path, encoded).expect("No se pudo guardar la identidad");
         println!("✨ Nueva identidad generada y guardada en identity.bin");
         new_key
