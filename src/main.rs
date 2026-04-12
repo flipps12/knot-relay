@@ -3,7 +3,7 @@ use libp2p::{
     PeerId,
     SwarmBuilder,
     identify,
-    identity::Keypair,
+    identity::{self, Keypair},
     kad,
     noise,
     ping,
@@ -12,7 +12,7 @@ use libp2p::{
     tcp,
     yamux,
 };
-use std::{ collections::HashMap, env, error::Error };
+use std::{ collections::HashMap, env, error::Error, fs, path::Path };
 use futures::StreamExt;
 
 #[derive(NetworkBehaviour)]
@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     let public_ip = args.get(1).unwrap();
 
-    let local_key = libp2p::identity::Keypair::generate_ed25519();
+    let local_key = load_or_create_identity();
     let local_peer_id = libp2p::PeerId::from(local_key.public());
 
     #[cfg(debug_assertions)]
@@ -150,5 +150,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
             _ => {}
         }
+    }
+}
+
+fn load_or_create_identity() -> identity::Keypair {
+    let path = Path::new("identity.bin");
+
+    if path.exists() {
+        // 1. Intentar cargar la llave existente
+        let bytes = fs::read(path).expect("No se pudo leer el archivo de identidad");
+        identity::Keypair::from_protobuf_encoding(&bytes)
+            .expect("Archivo de identidad corrupto")
+    } else {
+        // 2. Generar una nueva si no existe (usando Ed25519 por defecto)
+        let new_key = identity::Keypair::generate_ed25519();
+        let encoded = new_key.to_protobuf_encoding()
+            .expect("No se pudo codificar la llave");
+        
+        fs::write(path, encoded).expect("No se pudo guardar la identidad");
+        println!("✨ Nueva identidad generada y guardada en identity.bin");
+        new_key
     }
 }
