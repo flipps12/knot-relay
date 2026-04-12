@@ -1,7 +1,7 @@
 use libp2p::{
     PeerId, SwarmBuilder, identify, identity::Keypair, kad, noise, ping, relay, swarm::{NetworkBehaviour, SwarmEvent}, tcp, yamux
 };
-use std::error::Error;
+use std::{env, error::Error};
 use futures::StreamExt;
 
 #[derive(NetworkBehaviour)]
@@ -14,9 +14,13 @@ struct RelayBehaviour {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let args: Vec<String> = env::args().collect();
+    let public_ip = args.get(1).unwrap();
+
     let local_key = libp2p::identity::Keypair::generate_ed25519();
     let local_peer_id = libp2p::PeerId::from(local_key.public());
 
+    #[cfg(debug_assertions)]
     tracing_subscriber::fmt()
         .with_env_filter("libp2p=debug")
         .init();
@@ -59,9 +63,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     swarm.listen_on("/ip4/0.0.0.0/tcp/4001".parse()?)?;             // Puerto TCP
     //swarm.listen_on("/ip4/0.0.0.0/udp/4001/quic-v1".parse()?)?;    // Puerto QUIC
 
-    swarm.add_external_address(
-        "/ip4/192.168.0.46/tcp/4001".parse().unwrap(),
-    );
+    swarm.add_external_address(format!("/ip4/{}/tcp/4001", public_ip).parse().unwrap());
 
     println!("Knot Relay operativo en {}", local_peer_id);
 
