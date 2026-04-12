@@ -1,5 +1,5 @@
 use libp2p::{
-    SwarmBuilder, relay, identify, identity::Keypair, noise, swarm::{NetworkBehaviour, SwarmEvent}, tcp, yamux
+    PeerId, SwarmBuilder, identify, identity::Keypair, kad, noise, ping, relay, swarm::{NetworkBehaviour, SwarmEvent}, tcp, yamux
 };
 use std::error::Error;
 use futures::StreamExt;
@@ -8,6 +8,8 @@ use futures::StreamExt;
 struct RelayBehaviour {
     relay: relay::Behaviour,
     identify: identify::Behaviour,
+    ping: ping::Behaviour,
+    kademlia: kad::Behaviour<kad::store::MemoryStore>,
 }
 
 #[tokio::main]
@@ -30,12 +32,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
         // 2. TRANSPORTE QUIC (Para el "Buffet de Bytes" de alto rendi
         .with_quic()
         .with_behaviour(|key: &Keypair| {
+            let peer_id = PeerId::from(key.public());
+
+            let ping = ping::Behaviour::new(ping::Config::default());
+
+            let mut kademlia = kad::Behaviour::new(
+                peer_id,
+                kad::store::MemoryStore::new(peer_id),
+            );
+            kademlia.set_mode(Some(kad::Mode::Server));
+            
             RelayBehaviour {
                 relay: relay::Behaviour::new(local_peer_id, relay::Config::default()),
                 identify: identify::Behaviour::new(identify::Config::new(
-                    "/knot/relay/1.0.0".into(),
+                    "/knot/1.0.0".into(),
                     key.public(),
                 )),
+                ping,
+                kademlia
             }
         })?
         .with_swarm_config(|c| c.with_idle_connection_timeout(std::time::Duration::from_secs(60)))
@@ -44,6 +58,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // ESCUCHA EN AMBOS
     swarm.listen_on("/ip4/0.0.0.0/tcp/4001".parse()?)?;             // Puerto TCP
     //swarm.listen_on("/ip4/0.0.0.0/udp/4001/quic-v1".parse()?)?;    // Puerto QUIC
+
+    swarm.add_external_address(
+        "/ip4/192.168.0.46/tcp/4001".parse().unwrap(),
+    );
 
     println!("Knot Relay operativo en {}", local_peer_id);
 

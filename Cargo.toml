@@ -6,6 +6,6 @@ license = "Apache-2.0"
 
 [dependencies]
 futures = "0.3.32"
-libp2p = { version = "0.56.0", features = ["relay", "quic", "noise", "yamux", "identify", "tokio", "macros", "tcp"] }
+libp2p = { version = "0.56.0", features = ["relay", "quic", "noise", "yamux", "identify", "tokio", "macros", "tcp", "ping", "kad"] }
 tokio = { version = "1.51.0", features = ["full"] }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
