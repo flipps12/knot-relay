@@ -178,7 +178,7 @@ fn get_knot_config_dir() -> PathBuf {
     let mut path = dirs::config_dir().expect("No se pudo encontrar el directorio de configuración");
     
     // Añadimos nuestra carpeta específica
-    path.push("knot");
+    path.push("knot-relay");
     
     // Nos aseguramos de que la carpeta exista (si no, fs::write fallará)
     if !path.exists() {
